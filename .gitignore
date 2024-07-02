@@ -1,0 +1,12 @@
+.vscode/
+__pycache__/
+fs_simulator/
+qtstuff/
+Stuff/
+.temp
+fs_state.pk1
+performance_log.txt
+performance_data.csv
+"SRS Non-Formatted.docx"
+Project.rar
+# End of .gitignore
