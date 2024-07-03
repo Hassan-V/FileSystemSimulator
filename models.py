@@ -3,7 +3,6 @@ import datetime
 import logging
 import pickle
 import os
-import threading
 import time
 
 class File:

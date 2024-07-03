@@ -1,7 +1,7 @@
 # test_models.py
 
-import unittest
 import os
+import unittest
 import datetime
 import time
 from models import File, Directory, FileSystem
@@ -66,31 +66,40 @@ class TestDirectory(unittest.TestCase):
 
 class TestFileSystem(unittest.TestCase):
     def setUp(self):
+        # Delete the state file to ensure a clean state
+        state_file = 'filesystem_state.pkl'
+        if os.path.exists(state_file):
+            os.remove(state_file)
         self.fs = FileSystem()
 
     def test_create_file(self):
+        self.setUp()
         self.fs.create_file("/home/user", "test.txt", "Hello World")
         content = self.fs.read_file("/home/user/test.txt")
         self.assertEqual(content, "Hello World")
 
     def test_create_and_delete_file(self):
+        self.setUp()
         self.fs.create_file("/home/user", "test.txt", "Hello World")
         self.fs.delete("/home/user/test.txt")
         content = self.fs.read_file("/home/user/test.txt")
         self.assertIsNone(content)
 
     def test_create_directory(self):
+        self.setUp()
         self.fs._create_directory("/home/user/docs")
         contents = self.fs.list_dir("/home/user")
         self.assertIn("docs", contents["directories"])
 
     def test_copy_file(self):
+        self.setUp()
         self.fs.create_file("/home/user", "test.txt", "Hello World")
         self.fs.copy("/home/user/test.txt", "/home/user/copy_test.txt")
         content = self.fs.read_file("/home/user/copy_test.txt")
         self.assertEqual(content, "Hello World")
 
     def test_copy_directory(self):
+        self.setUp()
         self.fs._create_directory("/home/user/docs")
         self.fs.create_file("/home/user/docs", "test.txt", "Hello World")
         self.fs.copy("/home/user/docs", "/home/user/docs_copy")
@@ -100,6 +109,7 @@ class TestFileSystem(unittest.TestCase):
         self.assertEqual(copied_content, "Hello World")
 
     def test_move_file(self):
+        self.setUp()
         self.fs.create_file("/home/user", "test.txt", "Hello World")
         self.fs.move("/home/user/test.txt", "/home/user/moved_test.txt")
         content = self.fs.read_file("/home/user/moved_test.txt")
@@ -108,6 +118,7 @@ class TestFileSystem(unittest.TestCase):
         self.assertIsNone(old_content)
 
     def test_rename_file(self):
+        self.setUp()
         self.fs.create_file("/home/user", "test.txt", "Hello World")
         self.fs.rename("/home/user/test.txt", "renamed_test.txt")
         content = self.fs.read_file("/home/user/renamed_test.txt")
@@ -116,17 +127,20 @@ class TestFileSystem(unittest.TestCase):
         self.assertIsNone(old_content)
 
     def test_search_file(self):
+        self.setUp()
         self.fs.create_file("/home/user", "test.txt", "Hello World")
         results = self.fs.search("/home/user", "test.txt")
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].name, "test.txt")
 
     def test_statistics(self):
+        self.setUp()
         self.fs.create_file("/home/user", "test.txt", "Hello World")
         stats = self.fs.statistics()
         self.assertEqual(stats["total_files"], 1)
         self.assertEqual(stats["total_directories"], 2)
         self.assertEqual(stats["total_size"], len("Hello World"))
+        self.setUp()
 
 if __name__ == "__main__":
     unittest.main()

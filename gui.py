@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
-from models import FileSystem, File, Directory
+from models import FileSystem, File
 
 class FileSystemGUI:
     def __init__(self, root):
@@ -8,28 +8,22 @@ class FileSystemGUI:
         self.root.title("File System GUI")
         self.fs = FileSystem()
         
-        # Configure the root window grid
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
 
-        # Frame for the tree view and buttons, adjusted padding
         self.frame = tk.Frame(root, padx=10, pady=10)
         self.frame.grid(row=0, column=0, sticky='nsew')
         
-        # Configure the frame grid
         self.frame.grid_rowconfigure(0, weight=1)
         self.frame.grid_columnconfigure(0, weight=1)
 
-        # Tree view for file explorer, ensure it has enough space
         self.tree = ttk.Treeview(self.frame, selectmode="browse")
         self.tree.grid(row=0, column=0, sticky='nsew')
         
         self.tree.heading("#0", text="File System", anchor=tk.W)
         
-        # Add root directory
         self.tree.insert('', 'end', '/', text='/', open=True)
         
-        # Context menu for tree view
         self.tree_menu = tk.Menu(self.tree, tearoff=0)
         self.tree_menu.add_command(label="Create File", command=self.create_file_in_tree)
         self.tree_menu.add_command(label="Create Directory", command=self.create_directory_in_tree)
@@ -39,18 +33,15 @@ class FileSystemGUI:
         self.tree.bind("<Button-3>", self.show_tree_menu)
         self.tree.bind("<Button-1>", self.hide_tree_menu)
         
-        # Scrollbar for the tree view
         self.tree_scrollbar = ttk.Scrollbar(self.frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=self.tree_scrollbar.set)
         self.tree_scrollbar.grid(row=0, column=1, sticky='ns')
 
-        # Frame for buttons below the tree view, adjusted layout
         self.button_frame = tk.Frame(self.frame, pady=5)
         self.button_frame.grid(row=1, column=0, columnspan=2, sticky='ew')  # Adjusted padding here
         
-        # Buttons below the tree view
         self.create_drive_button = tk.Button(self.button_frame, text="Create Drive", command=self.create_drive)
-        self.create_drive_button.pack(side=tk.LEFT, padx=5)
+        #self.create_drive_button.pack(side=tk.LEFT, padx=5)
         
         self.copy_button = tk.Button(self.button_frame, text="Copy", command=self.copy)
         self.copy_button.pack(side=tk.LEFT, padx=5)
@@ -64,7 +55,6 @@ class FileSystemGUI:
         self.stats_button = tk.Button(self.button_frame, text="Statistics", command=self.show_stats)
         self.stats_button.pack(side=tk.LEFT, padx=5)
 
-        # Additional buttons for non-tree operations
         self.non_tree_button_frame = tk.Frame(self.frame, pady=5)
         self.non_tree_button_frame.grid(row=2, column=0, columnspan=2, sticky='ew')  # Adjusted padding here
 
@@ -127,6 +117,7 @@ class FileSystemGUI:
         drive_name = simpledialog.askstring("Input", "Enter the drive name:")
         if drive_name:
             self.fs.create_virtual_drive(drive_name)
+            self.fs.load_state(drive_name)
             self.populate_tree(self.fs.root, '')
 
     def copy(self):
@@ -191,11 +182,9 @@ class FileSystemGUI:
         return path
 
     def populate_tree(self, directory, parent):
-        # Clear the tree first
         for item in self.tree.get_children(parent):
             self.tree.delete(item)
         
-        # Populate the tree with directories and files
         self._populate_tree(directory, parent)
 
     def _populate_tree(self, directory, parent):
