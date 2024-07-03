@@ -63,9 +63,11 @@ class FileSystem:
                             logging.StreamHandler()
                         ])
 
-    def __init__(self, root_path="/"):
-        self.root = Directory(root_path)
+    def __init__(self, root_path="/", state_file='filesystem_state.pkl'):
         self.root_path = root_path
+        self.state_file = state_file
+        self.root = Directory(root_path)
+        self.load_state()
 
     def _create_directory(self, path):
         parts = path.strip("/").split("/")
@@ -75,6 +77,7 @@ class FileSystem:
                 new_dir = Directory(part)
                 current_dir.add_directory(new_dir)
             current_dir = current_dir.directories[part]
+        self.save_state()
 
     def _get_directory(self, path):
         parts = path.strip("/").split("/")
@@ -97,6 +100,7 @@ class FileSystem:
         if directory:
             new_file = File(name, content)
             directory.add_file(new_file)
+            self.save_state()
         self._log_performance("create", start_time)
 
     def read_file(self, path):
@@ -115,6 +119,7 @@ class FileSystem:
         directory = self._get_directory(dir_path)
         if directory and file_name in directory.files:
             directory.files[file_name].update_content(content)
+            self.save_state()
         self._log_performance("update", start_time)
 
     def delete(self, path):
@@ -126,6 +131,7 @@ class FileSystem:
                 directory.remove_file(name)
             elif name in directory.directories:
                 directory.remove_directory(name)
+            self.save_state()
         self._log_performance("delete", start_time)
 
     def list_dir(self, path):
@@ -153,14 +159,15 @@ class FileSystem:
         for subdir in directory.directories.values():
             self._gather_stats(subdir, stats)
 
-    def save_state(self, file_path):
-        with open(file_path, 'wb') as f:
+    def save_state(self):
+        with open(self.state_file, 'wb') as f:
             pickle.dump(self, f)
 
-    @staticmethod
-    def load_state(file_path):
-        with open(file_path, 'rb') as f:
-            return pickle.load(f)
+    def load_state(self):
+        if os.path.exists(self.state_file):
+            with open(self.state_file, 'rb') as f:
+                loaded_fs = pickle.load(f)
+                self.root = loaded_fs.root
 
     def create_virtual_drive(self, drive_name):
         virtual_drive_path = os.path.join(self.root_path, drive_name.strip("/"))
@@ -188,7 +195,7 @@ class FileSystem:
             new_dir = Directory(destination_name)
             destination_directory.add_directory(new_dir)
             self._copy_directory_contents(dir_to_copy, new_dir)
-
+        self.save_state()
         self._log_performance("copy", start_time)
 
     def _copy_directory_contents(self, source_directory, destination_directory):
@@ -204,6 +211,7 @@ class FileSystem:
         start_time = time.time_ns()
         self.copy(source_path, destination_path)
         self.delete(source_path)
+        self.save_state()
         self._log_performance("move", start_time)
 
     def rename(self, path, new_name):
@@ -220,6 +228,7 @@ class FileSystem:
             dir_to_rename.name = new_name
             directory.directories[new_name] = dir_to_rename
             del directory.directories[old_name]
+        self.save_state()
         self._log_performance("rename", start_time)
 
     def search(self, directory_path, search_term):
